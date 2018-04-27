@@ -573,6 +573,79 @@ let loginOut=(reqParamter,response)=>{
 
 
 
+
+/*添加优惠券*/
+
+let addCoupon=(reqParamter,response)=>{
+    /*验证token 是否有效*/
+   var title =reqParamter.title; 
+   var money=reqParamter.money;
+   var limt=reqParamter.limt;
+   var endTime=reqParamter.endTime;   
+
+     
+   // 返回参数格式
+   let responseJSon={
+        status:'',
+        message:'',
+        result:{}
+   }
+
+
+   if(!(title&&money&&limt&&endTime)){
+            responseJSon.status='1';
+            responseJSon.msg='缺少业务参数';
+            responseJSon.result={};
+            response.end(JSON.stringify(responseJSon));
+            return;  
+   }
+
+    Mysql.addCoupon([title,money,limt,endTime]).then((result)=>{
+           responseJSon.status='0';
+           responseJSon.msg='添加成功';
+           responseJSon.result={};
+           response.end(JSON.stringify(responseJSon));
+           return;
+    }).catch((error)=>{
+        console.log(error)
+        responseJSon.status='1';
+        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+    });
+}
+
+
+
+/*获取系统所有优惠券*/
+
+let couponList=(reqParamter,response)=>{
+  // 返回参数格式
+    let responseJSon={
+        status:'',
+        message:'',
+        result:{
+            couponList:[] 
+        }
+    }
+
+    Mysql.couponList([]).then((result)=>{
+           responseJSon.status='0';
+           responseJSon.msg='获取成功';
+           responseJSon.result.couponList=result;
+           response.end(JSON.stringify(responseJSon));
+    }).catch((error)=>{
+        console.log(error)
+        responseJSon.status='1';
+        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+    });
+}
+
+
+
+
 module.exports = {
   register, // 注册
   login,    // 登录
@@ -586,5 +659,8 @@ module.exports = {
   addCart, // 加入购物车
   goodsDetail, // 商品详情
   delCart,   // 购物车删除商品
-  getCart  // 获取购物车商品
+  getCart , // 获取购物车商品
+  addCoupon, // 添加优惠券
+  couponList,// 获取所有优惠券
+
 }

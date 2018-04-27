@@ -26,6 +26,10 @@ handle["/orderDetail"]=requestHandlers.orderDetail;   // 订单相详情
 handle["/addOrder"]=requestHandlers.addOrder; // 提交订单
 handle["/getOrder"]=requestHandlers.getOrder;  // 订单查询
 handle["/orderDetail"]=requestHandlers.orderDetail;  // 订单详情
+handle["/addCoupon"]=requestHandlers.addCoupon;  // 添加优惠券
+handle["/couponList"]=requestHandlers.couponList;  //获取系统所有优惠券
+
+
 server.start(router.route, handle);
 
 
