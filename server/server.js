@@ -3,18 +3,39 @@ var url = require("url");
 var Redis=require('../lib/redis');
 function start(route, handle) {
     function onRequest(request, response) {
+        // 获取请求的url对象
         var urlObj = url.parse(request.url);
+        // 获取请求路径
         var pathname = urlObj.pathname;
-
+        
+        //设置响应头，解决跨域问题 
+        response.setHeader("access-control-allow-origin","*");
+        response.setHeader("Content-Type", "application/json");
+        response.setHeader("access-control-allow-headers","Content-Type,Content-Length, Authorization, Accept,X-Requested-With");
 
          // 关闭nodejs 默认访问 favicon.ico
         if (!pathname.indexOf('/favicon.ico')) {
             return; 
         };
       
-        
+        //获取请求方法 
         let requestM=request.method;
-         
+          // 针对OPTIONS 处理
+          if(requestM==="OPTIONS"){
+           // response.statusCode = 204;
+            response.end();
+        };
+    
+        if(requestM=='REQUEST'){
+            let responseJSon={
+                    status:'9999',
+                    msg:'请使用POST请求方式',
+                    result:{}
+                }
+            response.end(JSON.stringify(responseJSon));
+            return ;
+        }
+
         if(requestM=='POST'){
              var post = '';  
              // 通过req的data事件监听函数，每当接受到请求体的数据，就累加到post变量中
@@ -42,36 +63,17 @@ function start(route, handle) {
                                     response.end(JSON.stringify(responseJSon));
                             }else{
                                route(pathname, reqParamter, handle, response);  
-                              // response.end();   
+                              
                             }
                         }); 
 
                 }else{
-                route(pathname, reqParamter, handle, response); 
-                  //response.end();  
+                  route(pathname, reqParamter, handle, response); 
                 } 
             });
-
-        }else{
-            route(pathname, {}, handle, response);       
         }
     }
-
-   var app= http.createServer(onRequest).listen(3000);
-    var port = 3000;
-   
-    var io = require('socket.io')(app);
-    app.listen(port);
-    io.on('connection', function (socket) {
-        console.log("New user connected.");
-        socket.emit('news', { hello: 'world' });
-        socket.on('my other event', function (data) {
-            console.log(data);
-        });
-    });
-    console.log("server listening on: " + port);
-
-  
+   http.createServer(onRequest).listen(3000);
 }
 
 exports.start = start;

@@ -254,16 +254,26 @@ let addAddress=(reqParamter, response)=>{
 
 /*获取地址列表*/
 let addressList=(reqParamter,response)=>{
-    let Token=reqParamter.token;
+    let    Token=reqParamter.token;
+    let   userId = jwtToken.verifyToken(Token);
 
-       // 验证token 是否有效
-     let    userId = jwtToken.verifyToken(Token);
+
+     /*http请求返回数据结构*/ 
+     let responseJSon={
+        status:'',          // 状态
+        message:'',         // 提示信息
+        result:{            // 返回json 数据
+            addressList:[],  
+           
+        } 
+   }
+
    
 
-     Mysql.addressList([userId]).then((result)=>{
-        responseJSon.status='0';
-       responseJSon.msg='获取地址成功';
-       responseJSon.result=result;
+    Mysql.addressList([userId]).then((result)=>{
+       responseJSon.status='0';
+       responseJSon.message='获取地址成功';
+       responseJSon.result.addressList=result;
        response.end(JSON.stringify(responseJSon));
            
          
