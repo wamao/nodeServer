@@ -9,14 +9,6 @@ var NewRegExp=require('../tools/RegExp');
 var getUUID=require('../tools/randomString');
 
 
-//服务端返回参数结构
-var responseJSon={
-   status:'',   // 状态
-   msg:'',      // 信息
-   result:{}    //结果
-}
-
-
 
 /*用户注册*/
 let register=(reqParamter,response)=>{
@@ -385,19 +377,27 @@ let defaultAddress=(reqParamter,response)=>{
 let goodsList=(reqParamter, response)=>{
     let page=reqParamter.page;
     let pageSize=reqParamter.pageSize || 10;
-    let sort=reqParamter.sort || 1;
-     if(!pageSize){
-        responseJSon.status='9999';
-        responseJSon.msg='缺少业务参数';
-        responseJSon.result=[];
-        response.end(JSON.stringify(responseJSon));  
+    let ThirdCategoryId=reqParamter.ThirdCategoryId; // 初始化基本参数
+    
+    let responseJSon={
+        status:'',
+        message:'',
+        result:{
+            categoryList:[]
+        }
+    }
 
+
+     if(!ThirdCategoryId){
+        responseJSon.status='9999';
+        responseJSon.message='缺少业务参数';
+        response.end(JSON.stringify(responseJSon));  
         return ;
      }
-    Mysql.goodsList(page,pageSize,sort).then((result)=>{
+    Mysql.goodsList(ThirdCategoryId,page,pageSize).then((result)=>{
         responseJSon.status='0';
-        responseJSon.msg="数据获取成功";
-        responseJSon.result=result;
+        responseJSon.message="数据获取成功";
+        responseJSon.result.categoryList=result;
         response.end(JSON.stringify(responseJSon));
     }).catch((err)=>{
           console.log(err);
@@ -588,10 +588,12 @@ let loginOut=(reqParamter,response)=>{
 
 let addCoupon=(reqParamter,response)=>{
     /*验证token 是否有效*/
-   var title =reqParamter.title; 
+  
    var money=reqParamter.money;
    var limt=reqParamter.limt;
    var endTime=reqParamter.endTime;   
+   var  startTime=reqParamter.startTime; 
+   let  couponId=getUUID.generateUUID(); // 随机生成couponId
 
      
    // 返回参数格式
@@ -602,7 +604,7 @@ let addCoupon=(reqParamter,response)=>{
    }
 
 
-   if(!(title&&money&&limt&&endTime)){
+   if(!(money&&limt&&endTime&&startTime)){
             responseJSon.status='1';
             responseJSon.msg='缺少业务参数';
             responseJSon.result={};
@@ -610,7 +612,7 @@ let addCoupon=(reqParamter,response)=>{
             return;  
    }
 
-    Mysql.addCoupon([title,money,limt,endTime]).then((result)=>{
+    Mysql.addCoupon([couponId,money,limt,startTime,endTime]).then((result)=>{
            responseJSon.status='0';
            responseJSon.msg='添加成功';
            responseJSon.result={};
@@ -625,6 +627,75 @@ let addCoupon=(reqParamter,response)=>{
     });
 }
 
+/*用户领取优惠券*/
+let drawCoupon= async (reqParamter,response)=>{
+    let Token =reqParamter.token; 
+    let userId=jwtToken.verifyToken(Token);  // 用户id
+    let  couponId=reqParamter.couponId; // 获取couponId
+    console.log('-----------------------------------------------')
+     console.log(couponId);
+     console.log('-----------------------------------------------')
+   // 返回参数格式
+   let responseJSon={
+        status:'',
+        message:'',
+        result:{}
+   }
+
+
+   if(!couponId){
+            responseJSon.status='1';
+            responseJSon.msg='缺少业务参数';
+            responseJSon.result={};
+            response.end(JSON.stringify(responseJSon));
+            return;  
+   }
+
+   let couponDetail=await  Mysql.searchCoupon([couponId]);
+   console.log(couponDetail[0].couponId);
+    Mysql.drawCoupon([userId,couponDetail[0].couponId,couponDetail[0].money,couponDetail[0].limt,couponDetail[0].startTime,couponDetail[0].endTime]).then((result)=>{
+            responseJSon.status='0';
+            responseJSon.msg='购物券领取成功';
+            responseJSon.result={};
+            response.end(JSON.stringify(responseJSon));
+     }).catch((error)=>{
+         console.log(error)
+         responseJSon.status='1';
+         responseJSon.msg='操作失败，请稍后重试!';
+         responseJSon.result={};
+         response.end(JSON.stringify(responseJSon));
+     });
+}
+
+
+
+/****************获取用户购物券****************/
+
+let  getCoupon=(reqParamter,response)=>{
+    var Token =reqParamter.token; 
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+            couponList:[]
+        } 
+    }
+    Mysql.getCoupon([userId]).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.msg='获取购物券成功';
+         responseJSon.result.couponList=result;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+      responseJSon.status='1';
+      responseJSon.msg='获取购物券失败,请稍后重试';
+      responseJSon.result.couponList=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+  
 
 
 /*获取系统所有优惠券*/
@@ -671,6 +742,8 @@ module.exports = {
   delCart,   // 购物车删除商品
   getCart , // 获取购物车商品
   addCoupon, // 添加优惠券
+  drawCoupon,// 用户领取优惠券
+  getCoupon, // 获取用户已经领取的优惠券
   couponList,// 获取所有优惠券
 
 }
