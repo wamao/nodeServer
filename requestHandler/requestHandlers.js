@@ -448,7 +448,7 @@ let goodsDetail=(reqParamter,response)=>{
 
 let  getCart=(reqParamter,response)=>{
   var Token =reqParamter.token; 
-  var userId=jwtToken.verifyToken(Token);  // 用户id
+  let userId =reqParamter.userId;
   let responseJSon={
       status:'',   // 状态码
       message:'',  // 提示信息
@@ -481,7 +481,7 @@ let addCart=(reqParamter,response)=>{
    var goodsSize=reqParamter.goodsSize;    // 商品规格
    var goodsColor=reqParamter.goodsColor;    // 商品颜色
    var goodsPrice,goodsImgArr,goodsName,categoryId;
-   var userId=jwtToken.verifyToken(Token);  // 用户id
+   var userId=reqParamter.userId;  // 用户id
 
    //返回参数格式
     let     responseJSon={

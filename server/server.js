@@ -1,6 +1,7 @@
 var http = require("http");
 var url = require("url");
 var Redis=require('../lib/redis');
+var jwtToken =require('../tools/jwtToken');
 function start(route, handle) {
     function onRequest(request, response) {
         // 获取请求的url对象
@@ -62,7 +63,24 @@ function start(route, handle) {
                                     }
                                     response.end(JSON.stringify(responseJSon));
                             }else{
-                               route(pathname, reqParamter, handle, response);  
+                               
+                                try{
+                                    
+                                    var userId=jwtToken.verifyToken(token);  // 用户id
+                                     reqParamter.userId=userId;
+                                     route(pathname, reqParamter, handle, response);  
+                                }catch(err){
+                                  
+                                    let responseJSon={
+                                        status:'9999',
+                                        msg:'身份验证失效,请重新登录',
+                                        result:{}
+                                     }
+                                      response.end(JSON.stringify(responseJSon));
+                                    
+                                }
+                               
+                             
                               
                             }
                         }); 
