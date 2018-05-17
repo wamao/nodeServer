@@ -1,4 +1,5 @@
 var querystring = require("querystring");
+var request = require('request');
 var fs = require("fs");
 var data= require('../tools/data')
 var Mysql=require('../lib/mysql');
@@ -7,7 +8,7 @@ var jwtToken =require('../tools/jwtToken');
 var moment = require('moment');
 var NewRegExp=require('../tools/RegExp');
 var getUUID=require('../tools/randomString');
-
+var categoryJSON=require('../tools/category.json');
 
 
 /*用户注册*/
@@ -108,6 +109,71 @@ let register=(reqParamter,response)=>{
       
     }).catch((err)=>{
        console.log(err);
+    });
+}
+
+
+/*微信授权登录*/
+
+let wxlogin=(reqParamter,response)=>{
+
+      /*http请求返回数据结构*/ 
+   let responseJSon={
+        status:'',          // 状态
+        message:'',         // 提示信息
+        result:{            // 返回json 数据
+            memberAccount:{},  // 用户模型
+            token:''           // token
+        } 
+    }   
+  
+    /*获取请求的参数*/
+    let js_code=reqParamter.code;
+
+    if(!js_code){
+        responseJSon.status="1";
+        responseJSon.message="缺少业务参数";
+        response.end(JSON.stringify(responseJSon));
+        
+    }
+        
+    let  appid='wx86b076066195fa3e';
+    let  secret='c00782393322e04feba2d2faa0cb5093';
+    let  grant_type='authorization_code';
+
+        
+    let requestUrl= `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${js_code}&grant_type=${grant_type}`;
+    request(requestUrl, function (error, res, body) {
+        if (!error && response.statusCode == 200) {
+            let resBody=JSON.parse(body);
+            if(resBody.openid){
+                let token= jwtToken.setToken(resBody.openid);
+              
+                Redis.redisClient.set(token,token, function (err, reply) { 
+                        if (err){
+                            responseJSon.status="9999";
+                            responseJSon.message="授权失败请稍后重试";
+                            response.end(JSON.stringify(responseJSon));
+                           
+                        } else{
+                           
+                            responseJSon.status="0";
+                            responseJSon.message="授权成功";
+                            responseJSon.result.token=token;
+                            response.end(JSON.stringify(responseJSon));
+                        
+                        }
+                }); 
+            }else{
+                responseJSon.status="9999";
+                responseJSon.message="授权失败请稍后重试";
+                response.end(JSON.stringify(responseJSon));
+            }
+        }else{
+            responseJSon.status="9999";
+            responseJSon.message="授权失败请稍后重试";
+            response.end(JSON.stringify(responseJSon));
+        }
     });
 }
 
@@ -372,13 +438,27 @@ let defaultAddress=(reqParamter,response)=>{
 }
 
 
+/*获取所有的分类*/
+let category=(reqParamter, response)=>{
+    let responseJSon={
+        status:'0',
+        message:'成功获取所有的分类',
+        result:{
+            category:categoryJSON
+        }
+    }
+
+    response.end(JSON.stringify(responseJSon));
+}
+
 
 /*获取商品列表*/
-let goodsList=(reqParamter, response)=>{
+let categoryList=(reqParamter, response)=>{
     let page=reqParamter.page;
     let pageSize=reqParamter.pageSize || 10;
-    let ThirdCategoryId=reqParamter.ThirdCategoryId; // 初始化基本参数
-    
+    let TopCategoryId=reqParamter.TopCategoryId||''; // 一级分类
+    let SecondaryCategoryId=reqParamter.TopCategoryId||'';  // 二级分类
+    let ThirdCategoryId=reqParamter.ThirdCategoryId||''; // 三级分类
     let responseJSon={
         status:'',
         message:'',
@@ -388,13 +468,13 @@ let goodsList=(reqParamter, response)=>{
     }
 
 
-     if(!ThirdCategoryId){
-        responseJSon.status='9999';
+     if(!(TopCategoryId || SecondaryCategoryId || ThirdCategoryId )){
+        responseJSon.status='1';
         responseJSon.message='缺少业务参数';
         response.end(JSON.stringify(responseJSon));  
         return ;
      }
-    Mysql.goodsList(ThirdCategoryId,page,pageSize).then((result)=>{
+    Mysql.categoryList(TopCategoryId,SecondaryCategoryId,ThirdCategoryId,page,pageSize).then((result)=>{
         responseJSon.status='0';
         responseJSon.message="数据获取成功";
         responseJSon.result.categoryList=result;
@@ -432,8 +512,11 @@ let goodsDetail=(reqParamter,response)=>{
 
      /*查询商品信息*/
     Mysql.goodsDetail([goodsId]).then((result)=>{
+       
        responseJSon.status='0';
        responseJSon.msg='商品详情获取成功';
+       result[0].goodsImgArr=result[0].goodsImgArr.split(',');
+       result[0].goodsSize=result[0].goodsSize.split(',');
        responseJSon.result.goodsDetail=result[0];
        response.end(JSON.stringify(responseJSon));  
 
@@ -479,7 +562,7 @@ let addCart=(reqParamter,response)=>{
    var goodsNumber=reqParamter.goodsNumber?reqParamter.goodsNumber:1;  // 商品数量
    var goodsId=reqParamter.goodsId;    // 商品id
    var goodsSize=reqParamter.goodsSize;    // 商品规格
-   var goodsColor=reqParamter.goodsColor;    // 商品颜色
+   var goodsStyle=reqParamter.goodsStyle;    // 商品款式
    var goodsPrice,goodsImgArr,goodsName,categoryId;
    var userId=reqParamter.userId;  // 用户id
 
@@ -493,7 +576,7 @@ let addCart=(reqParamter,response)=>{
             }
  
 
-   if(!(goodsId && goodsSize && goodsColor )){
+   if(!(goodsId && goodsSize.toSting()&& goodsStyle )){
     responseJSon.status='1';
     responseJSon.message='缺少必要的业务参数';
     responseJSon.result={};
@@ -507,8 +590,8 @@ let addCart=(reqParamter,response)=>{
     Mysql.goodsDetail([goodsId]).then((result)=>{
           goodsName=result[0].goodsName;
           goodsPrice =result[0].goodsPrice; 
-          goodsImgArr =result[0].goodsImgArr;  
-          Mysql.addCart([userId,goodsName,goodsPrice,goodsImgArr,goodsId,goodsNumber,goodsSize,goodsColor]).then((result)=>{
+          goodsImgUrl =result[0].goodsImgArr.split(',')[goodsStyle];  
+          Mysql.addCart([userId,goodsName,goodsPrice,goodsImgUrl,goodsId,goodsNumber,goodsSize,goodsStyle]).then((result)=>{
              responseJSon.status='0';
              responseJSon.message='加入购物车成功';
              responseJSon.result={};
@@ -632,9 +715,6 @@ let drawCoupon= async (reqParamter,response)=>{
     let Token =reqParamter.token; 
     let userId=jwtToken.verifyToken(Token);  // 用户id
     let  couponId=reqParamter.couponId; // 获取couponId
-    console.log('-----------------------------------------------')
-     console.log(couponId);
-     console.log('-----------------------------------------------')
    // 返回参数格式
    let responseJSon={
         status:'',
@@ -730,9 +810,11 @@ let couponList=(reqParamter,response)=>{
 module.exports = {
   register, // 注册
   login,    // 登录
+  wxlogin, // 微信授权登录
   loginOut, // 退出登录
   addAddress,  // 地址
-  goodsList,   // 商品列表
+  category,// 获取所有的分类
+  categoryList,   // 商品列表
   addressList,  // 地址列表
   delAddress,  // 删除列表
   editAddress, // 修改地址
