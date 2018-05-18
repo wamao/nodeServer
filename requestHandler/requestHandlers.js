@@ -147,6 +147,7 @@ let wxlogin=(reqParamter,response)=>{
         if (!error && response.statusCode == 200) {
             let resBody=JSON.parse(body);
             if(resBody.openid){
+                console.log(resBody.openid);
                 let token= jwtToken.setToken(resBody.openid);
               
                 Redis.redisClient.set(token,token, function (err, reply) { 
@@ -558,6 +559,8 @@ let  getCart=(reqParamter,response)=>{
 /************************************加入购物车*************************************************/
 let addCart=(reqParamter,response)=>{
    /*验证token 是否有效*/
+
+
    var Token =reqParamter.token; 
    var goodsNumber=reqParamter.goodsNumber?reqParamter.goodsNumber:1;  // 商品数量
    var goodsId=reqParamter.goodsId;    // 商品id
@@ -565,7 +568,7 @@ let addCart=(reqParamter,response)=>{
    var goodsStyle=reqParamter.goodsStyle;    // 商品款式
    var goodsPrice,goodsImgArr,goodsName,categoryId;
    var userId=reqParamter.userId;  // 用户id
-
+  
    //返回参数格式
     let     responseJSon={
                 status:'',   // 查询状态
@@ -575,8 +578,8 @@ let addCart=(reqParamter,response)=>{
                 } 
             }
  
-
-   if(!(goodsId && goodsSize.toSting()&& goodsStyle )){
+    /*判断是否缺少参数*/        
+   if(!(goodsId && goodsSize && String(goodsStyle) )){
     responseJSon.status='1';
     responseJSon.message='缺少必要的业务参数';
     responseJSon.result={};

@@ -48,15 +48,14 @@ function start(route, handle) {
             request.on('end', function(){ 
                 let   reqParamter = JSON.parse(post);
                 let  token=reqParamter.token;  
-                   console.log('11111111111111111111111111')
                 if(pathname=='/getAddress' || pathname=='/addAddress' ||  pathname=='/delAddress' || pathname=='/editAddress' || pathname=='/addCart'  || pathname=='/getCart'  || pathname=='/defaultAddress'){
-                    console.log('222222222222222222222222222')
+                   
                      /*判断当前用户是否为有效登录*/
                         Redis.redisClient.get(token, function (err, reply) { 
                             if(err){
                                 console.log(err);
                             }else if(!reply){
-                                console.log('3333333333333333333333333333333')
+                              
                                 let responseJSon={
                                     status:'9999',
                                     msg:'身份验证失效,请重新登录',
@@ -64,14 +63,12 @@ function start(route, handle) {
                                     }
                                     response.end(JSON.stringify(responseJSon));
                             }else{
-                               console.log(jwtToken.verifyToken(token))
+                              
                                 try{
-                                    console.log('444444444444444444444444444444')
                                     var userId=jwtToken.verifyToken(token);  // 用户id
                                      reqParamter.userId=userId;
                                      route(pathname, reqParamter, handle, response);  
                                 }catch(err){
-                                    console.log('55555555555555555555555555555')
                                     let responseJSon={
                                         status:'9999',
                                         msg:'身份验证失效,请重新登录',
