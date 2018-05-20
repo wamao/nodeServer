@@ -269,6 +269,18 @@ let login=(reqParamter, response)=>{
 
 /*添加地址*/
 let addAddress=(reqParamter, response)=>{
+   
+      /*http请求返回数据结构*/ 
+      let responseJSon={
+        status:'',          // 状态
+        message:'',         // 提示信息
+        result:{   }           // 返回json 数据
+           
+       
+   }
+
+
+
     let ContactPerson = reqParamter.ContactPerson;   // 
     let ContactNumber=  reqParamter.ContactNumber;
     let ContactAddress = reqParamter.ContactAddress;
@@ -277,11 +289,13 @@ let addAddress=(reqParamter, response)=>{
     let Token=reqParamter.token; 
     if((!ContactPerson) && (!ContactNumber) && (!ContactAddress) && (!ContactDetailAddress)  ){
          responseJSon.status='1';
-         responseJSon.msg='缺少必要的业务参数';
+         responseJSon.message='缺少必要的业务参数';
          responseJSon.result={};
          response.end(JSON.stringify(responseJSon));
          return;
     }
+
+
 
 
      
@@ -291,7 +305,7 @@ let addAddress=(reqParamter, response)=>{
 
      if(!userId){
            responseJSon.status='9999';
-           responseJSon.msg='身份验证失效,请重新登录';
+           responseJSon.message='身份验证失效,请重新登录';
            responseJSon.result={};
            response.end(JSON.stringify(responseJSon));
            return;
@@ -299,7 +313,7 @@ let addAddress=(reqParamter, response)=>{
 
     Mysql.addAddress([userId,ContactPerson,ContactNumber,ContactAddress,ContactDetailAddress,getUUID.generateUUID(),isDefault,createTime]).then((result)=>{
          responseJSon.status='0';
-         responseJSon.msg='添加新地址成功';
+         responseJSon.message='添加新地址成功';
          responseJSon.result={};
          response.end(JSON.stringify(responseJSon));
          return;
@@ -353,10 +367,16 @@ let editAddress=(reqParamter,response)=>{
     let ContactDetailAddress = reqParamter.ContactDetailAddress;
     let AddressId=reqParamter.AddressId;
  
+    let responseJSon={
+        status:'',          // 状态
+        message:'',         // 提示信息
+        result:{  }          // 返回json 数据
+   }  
+
 
     if((!ContactPerson) && (!ContactNumber) && (!ContactAddress) && (!ContactDetailAddress)  && (!AddressId) ){
          responseJSon.status='1';
-         responseJSon.msg='缺少必要的业务参数';
+         responseJSon.message='缺少必要的业务参数';
          responseJSon.result={};
          response.end(JSON.stringify(responseJSon));
          return;
@@ -365,7 +385,7 @@ let editAddress=(reqParamter,response)=>{
 
     Mysql.editAddress([ContactPerson,ContactNumber,ContactAddress,ContactDetailAddress,AddressId]).then((result)=>{
            responseJSon.status='0';
-           responseJSon.msg='地址修改成功';
+           responseJSon.message='地址修改成功';
            responseJSon.result={};
            response.end(JSON.stringify(responseJSon));
            return;    
@@ -379,12 +399,22 @@ let editAddress=(reqParamter,response)=>{
 
 /*删除地址*/
 let delAddress=(reqParamter,response)=>{
+
+
+    let responseJSon={
+        status:'',          // 状态
+        message:'',         // 提示信息
+        result:{  }          // 返回json 数据
+   }  
+
+
+
    /*验证token 是否有效*/
    let Token =reqParamter.token;
    let addressId=reqParamter.AddressId;
    if(!addressId){
       responseJSon.status='1';
-      responseJSon.msg='缺少必要的业务参数';
+      responseJSon.message='缺少必要的业务参数';
       responseJSon.result={};
       response.end(JSON.stringify(responseJSon));
       return;
@@ -395,12 +425,12 @@ let delAddress=(reqParamter,response)=>{
 
     Mysql.delAddress([addressId]).then((result)=>{
        responseJSon.status='0';
-       responseJSon.msg='删除地址成功';
+       responseJSon.message='删除地址成功';
        responseJSon.result={};
        response.end(JSON.stringify(responseJSon));
     }).catch((err)=>{
        responseJSon.status='2';
-       responseJSon.msg='删除地址失败，请稍后重试';
+       responseJSon.message='删除地址失败，请稍后重试';
        responseJSon.result={};
        response.end(JSON.stringify(responseJSon));
     });
@@ -414,7 +444,7 @@ let defaultAddress=(reqParamter,response)=>{
    let addressId=reqParamter.AddressId;
    if(!addressId){
       responseJSon.status='1';
-      responseJSon.msg='缺少必要的业务参数';
+      responseJSon.message='缺少必要的业务参数';
       responseJSon.result={};
       response.end(JSON.stringify(responseJSon));
       return;
@@ -426,7 +456,7 @@ let defaultAddress=(reqParamter,response)=>{
    Mysql.defaultAddress([0]).then((result)=>{
           Mysql.setDefaultAddress([addressId]).then((result)=>{
                  responseJSon.status='0';
-                 responseJSon.msg='设置默认地址成功！';
+                 responseJSon.message='设置默认地址成功！';
                  responseJSon.result={};
                  response.end(JSON.stringify(responseJSon));
            }).catch((err)=>{
