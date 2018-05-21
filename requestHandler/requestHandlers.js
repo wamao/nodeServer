@@ -270,16 +270,12 @@ let login=(reqParamter, response)=>{
 /*添加地址*/
 let addAddress=(reqParamter, response)=>{
    
-      /*http请求返回数据结构*/ 
-      let responseJSon={
+    /*http请求返回数据结构*/ 
+    let responseJSon={
         status:'',          // 状态
         message:'',         // 提示信息
         result:{   }           // 返回json 数据
-           
-       
-   }
-
-
+    }
 
     let ContactPerson = reqParamter.ContactPerson;   // 
     let ContactNumber=  reqParamter.ContactNumber;
@@ -295,26 +291,22 @@ let addAddress=(reqParamter, response)=>{
          return;
     }
 
-
-
-
-     
-     // 验证token 是否有效
+   
      let   userId = jwtToken.verifyToken(Token);
      let   createTime= moment().format('YYYY-MM-DD HH:mm:ss');
+     let   AddressId=getUUID.generateUUID(); // 生成addressId
 
-     if(!userId){
-           responseJSon.status='9999';
-           responseJSon.message='身份验证失效,请重新登录';
-           responseJSon.result={};
-           response.end(JSON.stringify(responseJSon));
-           return;
-     }
-
-    Mysql.addAddress([userId,ContactPerson,ContactNumber,ContactAddress,ContactDetailAddress,getUUID.generateUUID(),isDefault,createTime]).then((result)=>{
-         responseJSon.status='0';
+    Mysql.addAddress([userId,ContactPerson,ContactNumber,ContactAddress,ContactDetailAddress,AddressId,isDefault,createTime]).then((result)=>{
+        
+        responseJSon.status='0';
          responseJSon.message='添加新地址成功';
-         responseJSon.result={};
+         responseJSon.result={
+            ContactPerson:ContactPerson,
+            ContactNumber:ContactNumber,
+            ContactAddress:ContactAddress,
+            ContactDetailAddress:ContactDetailAddress,
+            AddressId:AddressId
+         };
          response.end(JSON.stringify(responseJSon));
          return;
     }).catch((err)=>{
@@ -765,7 +757,6 @@ let drawCoupon= async (reqParamter,response)=>{
    }
 
    let couponDetail=await  Mysql.searchCoupon([couponId]);
-   console.log(couponDetail[0].couponId);
     Mysql.drawCoupon([userId,couponDetail[0].couponId,couponDetail[0].money,couponDetail[0].limt,couponDetail[0].startTime,couponDetail[0].endTime]).then((result)=>{
             responseJSon.status='0';
             responseJSon.msg='购物券领取成功';
@@ -838,6 +829,86 @@ let couponList=(reqParamter,response)=>{
 }
 
 
+/*****提交订单******/
+
+let submitOrder=(reqParamter,response)=>{
+    let responseJSon={
+        status:'',
+        message:'',
+        result:{
+            couponList:[] 
+        }
+    }
+
+      let order=reqParamter.order;
+      var Token =reqParamter.token; 
+      var userId=jwtToken.verifyToken(Token);  // 用户id
+
+      if(!order){
+        responseJSon.status='1';
+        responseJSon.msg='缺少必要的业务参数!';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+        return; 
+      }
+     
+      let sql='' 
+        order.forEach(item => {
+            
+            let sqlString =`('${userId}','${getUUID.generateUUID()}','${item.goodsId}','${item.addressId}','${item.goodsNumber}',0,'${item.goodsSize}','${item.remark}'),`;
+            sql+=sqlString;
+        });
+       let  newSql=sql.substring(0,sql.length-1);
+        // 提交订单 
+        Mysql.addOrder(newSql).then((result)=>{
+            responseJSon.status='0';
+            responseJSon.msg='订单提交成功';
+            responseJSon.result.couponList=result;
+            response.end(JSON.stringify(responseJSon));
+        }).catch((error)=>{
+        console.log(error)
+        responseJSon.status='1';
+        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+        });
+
+
+}
+
+/*****订单查询******/
+
+
+let getOrder=(reqParamter,response)=>{
+    let responseJSon={
+        status:'',
+        message:'',
+        result:{
+        orderList:[] 
+        }
+    }
+
+    let orderType=reqParamter.orderType?reqParamter.orderType:0;
+    var Token =reqParamter.token; 
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+
+    Mysql.getOrder(userId,orderType).then((result)=>{
+       
+        responseJSon.status='0';
+        responseJSon.message='订单获取成功';
+        responseJSon.result.orderList=result;
+        response.end(JSON.stringify(responseJSon));
+        
+    }).catch((error)=>{
+   
+    responseJSon.status='1';
+    responseJSon.msg='操作失败，请稍后重试!';
+    responseJSon.result={};
+    response.end(JSON.stringify(responseJSon));
+    });
+}
+
+
 
 
 module.exports = {
@@ -860,5 +931,7 @@ module.exports = {
   drawCoupon,// 用户领取优惠券
   getCoupon, // 获取用户已经领取的优惠券
   couponList,// 获取所有优惠券
+  submitOrder, // 提交订单
+  getOrder // 获取订单
 
 }
