@@ -9,7 +9,17 @@ let generateUUID = ()=>{
 	return uuid;
 };
 
+let randomNum=()=>{
+	var str = '';
+	for(var i = 0; i <10; i += 1){
+			str+= Math.floor(Math.random() * 10);
+	}
+  return str;
+		
+};
+
 
 module.exports={
-	generateUUID
+	generateUUID,
+	randomNum
 }

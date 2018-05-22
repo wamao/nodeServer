@@ -33,6 +33,11 @@ handle["/drawCoupon"]=requestHandlers.drawCoupon;  // 用户领取优惠券
 handle["/getCoupon"]=requestHandlers.getCoupon;  // 获取用户已经领取优惠券
 handle["/couponList"]=requestHandlers.couponList;  //获取系统所有优惠券
 handle["/submitOrder"]=requestHandlers.submitOrder; // 提交订单
+handle["/cancelOrder"]=requestHandlers.cancelOrder; // 取消订单
+handle["/collect"]=requestHandlers.collect; //收藏商品
+handle["/cancelCollect"]=requestHandlers.cancelCollect; // 取消收藏
+handle["/getCollect"]=requestHandlers.getCollect; // 取消收藏
+handle["/isCollect"]=requestHandlers.isCollect; // 判断用户是否已经收藏
 
 server.start(router.route, handle);
 

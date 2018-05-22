@@ -319,9 +319,8 @@ let addAddress=(reqParamter, response)=>{
 
 /*获取地址列表*/
 let addressList=(reqParamter,response)=>{
-    let    Token=reqParamter.token;
+    let   Token=reqParamter.token;
     let   userId = jwtToken.verifyToken(Token);
-
 
      /*http请求返回数据结构*/ 
      let responseJSon={
@@ -832,6 +831,8 @@ let couponList=(reqParamter,response)=>{
 /*****提交订单******/
 
 let submitOrder=(reqParamter,response)=>{
+
+
     let responseJSon={
         status:'',
         message:'',
@@ -854,8 +855,8 @@ let submitOrder=(reqParamter,response)=>{
      
       let sql='' 
         order.forEach(item => {
-            
-            let sqlString =`('${userId}','${getUUID.generateUUID()}','${item.goodsId}','${item.addressId}','${item.goodsNumber}',0,'${item.goodsSize}','${item.remark}'),`;
+           let   createTime= moment().format('YYYY-MM-DD HH:mm:ss');
+            let sqlString =`('${userId}','${getUUID.generateUUID()}','${item.goodsId}','${item.addressId}','${item.goodsNumber}',0,'${item.goodsSize}','${item.remark}','${createTime}','${getUUID.randomNum()}'),`;
             sql+=sqlString;
         });
        let  newSql=sql.substring(0,sql.length-1);
@@ -879,7 +880,7 @@ let submitOrder=(reqParamter,response)=>{
 /*****订单查询******/
 
 
-let getOrder=(reqParamter,response)=>{
+let getOrder=async  (reqParamter,response)=>{
     let responseJSon={
         status:'',
         message:'',
@@ -891,6 +892,9 @@ let getOrder=(reqParamter,response)=>{
     let orderType=reqParamter.orderType?reqParamter.orderType:0;
     var Token =reqParamter.token; 
     var userId=jwtToken.verifyToken(Token);  // 用户id
+
+
+    let result= await  Mysql.getOrder(userId,orderType);
 
     Mysql.getOrder(userId,orderType).then((result)=>{
        
@@ -907,6 +911,180 @@ let getOrder=(reqParamter,response)=>{
     response.end(JSON.stringify(responseJSon));
     });
 }
+
+/*取消订单*/
+let cancelOrder=(reqParamter,response)=>{
+   /*验证token 是否有效*/
+   var Token =reqParamter.token; 
+   var orderId=reqParamter.orderId;    // 商品id
+  
+   // 返回参数格式
+   let responseJSon={
+        status:'',
+        message:'',
+        result:{}
+   }
+
+   if(!orderId){
+    responseJSon.status='1';
+        responseJSon.message='缺少业务参数';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+        return;  
+}
+
+    Mysql.cancelOrder([orderId]).then((result)=>{
+           responseJSon.status='0';
+           responseJSon.msg='已成功取消订单';
+           responseJSon.result={};
+           response.end(JSON.stringify(responseJSon));
+           return;
+    }).catch((error)=>{
+       
+        responseJSon.status='1';
+        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.result={};
+        response.end(JSON.stringify(responseJSon));
+    });
+}
+
+
+/*商品收藏*/
+let collect=(reqParamter,response)=>{
+    /*验证token 是否有效*/
+    var Token =reqParamter.token; 
+    var goodsId=reqParamter.goodsId;    // 商品id
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+    // 返回参数格式
+    let responseJSon={
+         status:'',
+         message:'',
+         result:{
+             hasCollect:1
+         }
+    }
+
+    if(!goodsId){
+        responseJSon.status='1';
+            responseJSon.message='缺少业务参数';
+            responseJSon.result={};
+            response.end(JSON.stringify(responseJSon));
+            return;  
+    }
+ 
+     Mysql.collect([userId,goodsId,getUUID.generateUUID()]).then((result)=>{
+            responseJSon.status='0';
+            responseJSon.message='收藏成功';
+            responseJSon.result.hasCollect=1;
+            response.end(JSON.stringify(responseJSon));
+            return;
+     }).catch((error)=>{
+        
+         responseJSon.status='1';
+         responseJSon.message='操作失败，请稍后重试!';
+         responseJSon.result={};
+         response.end(JSON.stringify(responseJSon));
+     });
+ }
+
+ /*取消收藏*/
+let cancelCollect=(reqParamter,response)=>{
+    /*验证token 是否有效*/
+    var Token =reqParamter.token; 
+    var goodsId=reqParamter.goodsId;    // 商品id
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+   
+ 
+    // 返回参数格式
+    let responseJSon={
+         status:'',
+         message:'',
+         result:{
+             hasCollect:0
+         }
+    }
+ 
+    if(!goodsId){
+           responseJSon.status='1';
+            responseJSon.message='缺少业务参数';
+            responseJSon.result={};
+            response.end(JSON.stringify(responseJSon));
+            return;  
+    }
+ 
+     Mysql.cancelCollect(userId,goodsId).then((result)=>{
+            responseJSon.status='0';
+            responseJSon.message='已成功取消收藏';
+            responseJSon.result.hasCollect=0;
+            response.end(JSON.stringify(responseJSon));
+            return;
+     }).catch((error)=>{
+        
+         responseJSon.status='1';
+         responseJSon.message='操作失败，请稍后重试!';
+         responseJSon.result={};
+         response.end(JSON.stringify(responseJSon));
+     });
+ }
+
+ 
+
+ /****************获取用户所有的收藏****************/
+
+let  getCollect=(reqParamter,response)=>{
+    var Token =reqParamter.token; 
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+            collectList:[]
+        } 
+    }
+    Mysql.getCollect([userId]).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.message='获取所有收藏成功';
+         responseJSon.result.collectList=result;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+      responseJSon.status='1';
+      responseJSon.message='获取失败,请稍后重试';
+      responseJSon.result.collectList=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+
+
+/****************判断用户是否已经收藏****************/
+let  isCollect=(reqParamter,response)=>{
+    var Token =reqParamter.token; 
+    var userId=jwtToken.verifyToken(Token);  // 用户id
+    var goodsId=reqParamter.goodsId;    // 商品id
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+            hasCollect:0
+        } 
+    }
+    Mysql.isCollect([userId,goodsId]).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.message='获取所有收藏成功';
+         responseJSon.result.hasCollect=result.length==0?0:1;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+      responseJSon.status='1';
+      responseJSon.message='获取失败,请稍后重试';
+      responseJSon.result.collectList=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+  
+ 
 
 
 
@@ -932,6 +1110,12 @@ module.exports = {
   getCoupon, // 获取用户已经领取的优惠券
   couponList,// 获取所有优惠券
   submitOrder, // 提交订单
-  getOrder // 获取订单
+  getOrder ,// 获取订单
+  cancelOrder, // 取消订单
+  collect, // 商品收藏
+  cancelCollect, // 取消收藏
+  getCollect ,// 获取所有收藏
+  isCollect  // 判断用户是否已经收藏
+  
 
 }
