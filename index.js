@@ -36,7 +36,7 @@ handle["/submitOrder"]=requestHandlers.submitOrder; // 提交订单
 handle["/cancelOrder"]=requestHandlers.cancelOrder; // 取消订单
 handle["/collect"]=requestHandlers.collect; //收藏商品
 handle["/cancelCollect"]=requestHandlers.cancelCollect; // 取消收藏
-handle["/getCollect"]=requestHandlers.getCollect; // 取消收藏
+handle["/getCollect"]=requestHandlers.getCollect; // 获取所有收藏
 handle["/isCollect"]=requestHandlers.isCollect; // 判断用户是否已经收藏
 
 server.start(router.route, handle);

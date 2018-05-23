@@ -490,19 +490,30 @@ let categoryList=(reqParamter, response)=>{
     }
 
 
+    if(!page){
+        responseJSon.status='·';
+        responseJSon.message="缺少必要的业务参数";
+        responseJSon.result.categoryList=result;
+        response.end(JSON.stringify(responseJSon));
+    }
+
+
      if(!(TopCategoryId || SecondaryCategoryId || ThirdCategoryId )){
         responseJSon.status='1';
         responseJSon.message='缺少业务参数';
         response.end(JSON.stringify(responseJSon));  
         return ;
      }
-    Mysql.categoryList(TopCategoryId,SecondaryCategoryId,ThirdCategoryId,page,pageSize).then((result)=>{
+    Mysql.categoryList(TopCategoryId,SecondaryCategoryId,ThirdCategoryId,Number(page),pageSize).then((result)=>{
         responseJSon.status='0';
         responseJSon.message="数据获取成功";
         responseJSon.result.categoryList=result;
         response.end(JSON.stringify(responseJSon));
     }).catch((err)=>{
-          console.log(err);
+        responseJSon.status='9';
+        responseJSon.message="数据获取失败,请稍后重试";
+        responseJSon.result.categoryList=result;
+        response.end(JSON.stringify(responseJSon));
     });
 }
 
@@ -536,7 +547,7 @@ let goodsDetail=(reqParamter,response)=>{
     Mysql.goodsDetail([goodsId]).then((result)=>{
        
        responseJSon.status='0';
-       responseJSon.msg='商品详情获取成功';
+       responseJSon.message='商品详情获取成功';
        result[0].goodsImgArr=result[0].goodsImgArr.split(',');
        result[0].goodsSize=result[0].goodsSize.split(',');
        responseJSon.result.goodsDetail=result[0];
@@ -563,13 +574,13 @@ let  getCart=(reqParamter,response)=>{
   }
   Mysql.getCart([userId]).then((result)=>{
        responseJSon.status='0';
-       responseJSon.msg='获取购物车商品成功';
+       responseJSon.message='获取购物车商品成功';
        responseJSon.result.cartList=result;
        response.end(JSON.stringify(responseJSon));
        return;
   }).catch((error)=>{
     responseJSon.status='1';
-    responseJSon.msg='获取购物车商品失败,请稍后重试';
+    responseJSon.message='获取购物车商品失败,请稍后重试';
     responseJSon.result.cartList=[];
     response.end(JSON.stringify(responseJSon));
   });
@@ -654,14 +665,14 @@ let delCart=(reqParamter,response)=>{
 
     Mysql.delCart([goodsId]).then((result)=>{
            responseJSon.status='0';
-           responseJSon.msg='已成功从购物车删除';
+           responseJSon.message='已成功从购物车删除';
            responseJSon.result={};
            response.end(JSON.stringify(responseJSon));
            return;
     }).catch((error)=>{
        
         responseJSon.status='1';
-        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.message='操作失败，请稍后重试!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
     });
@@ -680,7 +691,7 @@ let loginOut=(reqParamter,response)=>{
          console.log(err);
     }
      responseJSon.status='0';
-     responseJSon.msg='已成功退出';
+     responseJSon.message='已成功退出';
      responseJSon.result={};
      response.end(JSON.stringify(responseJSon));
 }); 
@@ -695,11 +706,11 @@ let loginOut=(reqParamter,response)=>{
 
 let addCoupon=(reqParamter,response)=>{
     /*验证token 是否有效*/
-  
-   var money=reqParamter.money;
-   var limt=reqParamter.limt;
+ 
+   var spendMoney=reqParamter.spendMoney;
+   var disCount=reqParamter.disCount;
    var endTime=reqParamter.endTime;   
-   var  startTime=reqParamter.startTime; 
+   var  title=reqParamter.title; 
    let  couponId=getUUID.generateUUID(); // 随机生成couponId
 
      
@@ -711,24 +722,24 @@ let addCoupon=(reqParamter,response)=>{
    }
 
 
-   if(!(money&&limt&&endTime&&startTime)){
+   if(!(spendMoney&&disCount&&title&&endTime)){
             responseJSon.status='1';
-            responseJSon.msg='缺少业务参数';
+            responseJSon.message='缺少业务参数';
             responseJSon.result={};
             response.end(JSON.stringify(responseJSon));
             return;  
    }
 
-    Mysql.addCoupon([couponId,money,limt,startTime,endTime]).then((result)=>{
+    Mysql.addCoupon([couponId,spendMoney,disCount,endTime,title]).then((result)=>{
            responseJSon.status='0';
-           responseJSon.msg='添加成功';
+           responseJSon.message='添加成功';
            responseJSon.result={};
            response.end(JSON.stringify(responseJSon));
            return;
     }).catch((error)=>{
         console.log(error)
         responseJSon.status='1';
-        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.message='操作失败，请稍后重试!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
     });
@@ -749,7 +760,7 @@ let drawCoupon= async (reqParamter,response)=>{
 
    if(!couponId){
             responseJSon.status='1';
-            responseJSon.msg='缺少业务参数';
+            responseJSon.message='缺少业务参数';
             responseJSon.result={};
             response.end(JSON.stringify(responseJSon));
             return;  
@@ -758,13 +769,13 @@ let drawCoupon= async (reqParamter,response)=>{
    let couponDetail=await  Mysql.searchCoupon([couponId]);
     Mysql.drawCoupon([userId,couponDetail[0].couponId,couponDetail[0].money,couponDetail[0].limt,couponDetail[0].startTime,couponDetail[0].endTime]).then((result)=>{
             responseJSon.status='0';
-            responseJSon.msg='购物券领取成功';
+            responseJSon.message='购物券领取成功';
             responseJSon.result={};
             response.end(JSON.stringify(responseJSon));
      }).catch((error)=>{
          console.log(error)
          responseJSon.status='1';
-         responseJSon.msg='操作失败，请稍后重试!';
+         responseJSon.message='操作失败，请稍后重试!';
          responseJSon.result={};
          response.end(JSON.stringify(responseJSon));
      });
@@ -786,13 +797,13 @@ let  getCoupon=(reqParamter,response)=>{
     }
     Mysql.getCoupon([userId]).then((result)=>{
          responseJSon.status='0';
-         responseJSon.msg='获取购物券成功';
+         responseJSon.message='获取购物券成功';
          responseJSon.result.couponList=result;
          response.end(JSON.stringify(responseJSon));
          return;
     }).catch((error)=>{
       responseJSon.status='1';
-      responseJSon.msg='获取购物券失败,请稍后重试';
+      responseJSon.message='获取购物券失败,请稍后重试';
       responseJSon.result.couponList=[];
       response.end(JSON.stringify(responseJSon));
     });
@@ -815,13 +826,13 @@ let couponList=(reqParamter,response)=>{
 
     Mysql.couponList([]).then((result)=>{
            responseJSon.status='0';
-           responseJSon.msg='获取成功';
+           responseJSon.message='获取成功';
            responseJSon.result.couponList=result;
            response.end(JSON.stringify(responseJSon));
     }).catch((error)=>{
         console.log(error)
         responseJSon.status='1';
-        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.message='操作失败，请稍后重试!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
     });
@@ -847,7 +858,7 @@ let submitOrder=(reqParamter,response)=>{
 
       if(!order){
         responseJSon.status='1';
-        responseJSon.msg='缺少必要的业务参数!';
+        responseJSon.message='缺少必要的业务参数!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
         return; 
@@ -863,13 +874,13 @@ let submitOrder=(reqParamter,response)=>{
         // 提交订单 
         Mysql.addOrder(newSql).then((result)=>{
             responseJSon.status='0';
-            responseJSon.msg='订单提交成功';
+            responseJSon.message='订单提交成功';
             responseJSon.result.couponList=result;
             response.end(JSON.stringify(responseJSon));
         }).catch((error)=>{
         console.log(error)
         responseJSon.status='1';
-        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.message='操作失败，请稍后重试!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
         });
@@ -906,7 +917,7 @@ let getOrder=async  (reqParamter,response)=>{
     }).catch((error)=>{
    
     responseJSon.status='1';
-    responseJSon.msg='操作失败，请稍后重试!';
+    responseJSon.message='操作失败，请稍后重试!';
     responseJSon.result={};
     response.end(JSON.stringify(responseJSon));
     });
@@ -935,14 +946,14 @@ let cancelOrder=(reqParamter,response)=>{
 
     Mysql.cancelOrder([orderId]).then((result)=>{
            responseJSon.status='0';
-           responseJSon.msg='已成功取消订单';
+           responseJSon.message='已成功取消订单';
            responseJSon.result={};
            response.end(JSON.stringify(responseJSon));
            return;
     }).catch((error)=>{
        
         responseJSon.status='1';
-        responseJSon.msg='操作失败，请稍后重试!';
+        responseJSon.message='操作失败，请稍后重试!';
         responseJSon.result={};
         response.end(JSON.stringify(responseJSon));
     });
