@@ -38,6 +38,9 @@ handle["/collect"]=requestHandlers.collect; //收藏商品
 handle["/cancelCollect"]=requestHandlers.cancelCollect; // 取消收藏
 handle["/getCollect"]=requestHandlers.getCollect; // 获取所有收藏
 handle["/isCollect"]=requestHandlers.isCollect; // 判断用户是否已经收藏
+handle["/searchGoods"]=requestHandlers.searchGoods; // 商品搜索
+handle["/addChosen"]=requestHandlers.addChosen ; // 添加精选商品
+handle["/getChosen"]=requestHandlers.getChosen ; // 添加精选商品
 
 server.start(router.route, handle);
 

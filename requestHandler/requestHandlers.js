@@ -1094,6 +1094,111 @@ let  isCollect=(reqParamter,response)=>{
     });
   
   }
+
+
+  
+/****************判断用户是否已经收藏****************/
+let  searchGoods=(reqParamter,response)=>{
+   
+    var keyword=reqParamter.keyword;    // 商品id
+    var page=reqParamter.page;    // 商品id
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+           goodslist:[] 
+        } 
+    }
+
+
+    if(!keyword&&page){
+        responseJSon.status='1';
+        responseJSon.message='请输入关键词';
+        responseJSon.result={}
+        response.end(JSON.stringify(responseJSon));
+        return;
+    }
+    Mysql.searchGoods(keyword,page).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.message='获取所有收藏成功';
+         responseJSon.result.goodslist=result;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+        console.log(error)
+      responseJSon.status='1';
+      responseJSon.message='获取失败,请稍后重试';
+      responseJSon.result.goodslist=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+
+
+    
+/****************添加精选商品****************/
+let  addChosen=(reqParamter,response)=>{
+  
+    var goodsId=reqParamter.goodsId;    // 商品id
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+           goodslist:[] 
+        } 
+    }
+   
+    if(!goodsId){
+        responseJSon.status='1';
+        responseJSon.message='缺少必要的参数';
+        responseJSon.result={}
+        response.end(JSON.stringify(responseJSon));
+        return;
+    }
+    
+    Mysql.addChosen([goodsId]).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.message='添加成功';
+         responseJSon.result.goodslist=result;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+       console.log(error);
+      responseJSon.status='1';
+      responseJSon.message='获取失败,请稍后重试';
+      responseJSon.result.goodslist=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+
+
+  /*获取系统所有优惠券*/
+
+let getChosen=(reqParamter,response)=>{
+    // 返回参数格式
+      let responseJSon={
+          status:'',
+          message:'',
+          result:{
+            chosenList:[] 
+          }
+      }
+  
+      Mysql.chosenList([]).then((result)=>{
+             responseJSon.status='0';
+             responseJSon.message='获取成功';
+             responseJSon.result.chosenList=result;
+             response.end(JSON.stringify(responseJSon));
+      }).catch((error)=>{
+          console.log(error)
+          responseJSon.status='1';
+          responseJSon.message='操作失败，请稍后重试!';
+          responseJSon.result={};
+          response.end(JSON.stringify(responseJSon));
+      });
+  }
+  
   
  
 
@@ -1126,7 +1231,10 @@ module.exports = {
   collect, // 商品收藏
   cancelCollect, // 取消收藏
   getCollect ,// 获取所有收藏
-  isCollect  // 判断用户是否已经收藏
+  isCollect , // 判断用户是否已经收藏
+  searchGoods, // 搜索商品
+  addChosen ,// 添加精选商品
+  getChosen // 获取所有的精选商品
   
 
 }
