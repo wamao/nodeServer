@@ -165,6 +165,10 @@ let wxlogin=(reqParamter,response)=>{
                         
                         }
                 }); 
+
+               // Redis.redisClient.expire('token',30*24*60*60);//设置过期时间为一个月
+               Redis.redisClient.expire(token,1);//设置过期时间为一个月
+
             }else{
                 responseJSon.status="9999";
                 responseJSon.message="授权失败请稍后重试";
