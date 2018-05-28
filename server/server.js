@@ -48,7 +48,7 @@ function start(route, handle) {
             request.on('end', function(){ 
                 let   reqParamter = JSON.parse(post);
                 let  token=reqParamter.token;  
-                if(pathname=='/getAddress' || pathname=='/addAddress' ||  pathname=='/delAddress' || pathname=='/editAddress' || pathname=='/addCart'  || pathname=='/getCart'  || pathname=='/defaultAddress' || pathname=="/cancelCollect" || pathname=="/getCollect" || pathname=="/collect" || pathname=="/getCoupon" || pathname=="/drawCoupon"){
+                if( pathname=='/getOrder' ||   pathname=='/getAddress' || pathname=='/addAddress' ||  pathname=='/delAddress' || pathname=='/editAddress' || pathname=='/addCart'  || pathname=='/getCart'  || pathname=='/defaultAddress' || pathname=="/cancelCollect" || pathname=="/getCollect" || pathname=="/collect" || pathname=="/getCoupon" || pathname=="/drawCoupon"){
                    
                      /*判断当前用户是否为有效登录*/
                         Redis.redisClient.get(token, function (err, reply) { 

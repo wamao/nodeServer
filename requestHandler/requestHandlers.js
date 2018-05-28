@@ -9,7 +9,7 @@ var moment = require('moment');
 var NewRegExp=require('../tools/RegExp');
 var getUUID=require('../tools/randomString');
 var categoryJSON=require('../tools/category.json');
-
+var recommendJSON=require('../tools/indexData.json');
 
 /*用户注册*/
 let register=(reqParamter,response)=>{
@@ -167,7 +167,7 @@ let wxlogin=(reqParamter,response)=>{
                 }); 
 
                // Redis.redisClient.expire('token',30*24*60*60);//设置过期时间为一个月
-               Redis.redisClient.expire(token,1);//设置过期时间为一个月
+               Redis.redisClient.expire(token,30*24*60*60);//设置过期时间为一个月
 
             }else{
                 responseJSon.status="9999";
@@ -1177,8 +1177,7 @@ let  addChosen=(reqParamter,response)=>{
   }
 
 
-  /*获取系统所有优惠券*/
-
+  /*获取所有精选商品*/
 let getChosen=(reqParamter,response)=>{
     // 返回参数格式
       let responseJSon={
@@ -1204,7 +1203,83 @@ let getChosen=(reqParamter,response)=>{
   }
   
   
- 
+     
+/****************添加折扣商品商品****************/
+let  addDiscount=(reqParamter,response)=>{
+  
+    var goodsId=reqParamter.goodsId;    // 商品id
+    var  discount=reqParamter.discount;// 折扣
+    let responseJSon={
+        status:'',   // 状态码
+        message:'',  // 提示信息
+        result:{      // 结果
+            discountList:[] 
+        } 
+    }
+   
+    if(!goodsId && !discount){
+        responseJSon.status='1';
+        responseJSon.message='缺少必要的参数';
+        responseJSon.result={}
+        response.end(JSON.stringify(responseJSon));
+        return;
+    }
+    
+    Mysql.addDiscount([goodsId,discount]).then((result)=>{
+         responseJSon.status='0';
+         responseJSon.message='添加商品成功';
+         responseJSon.result.discountList=result;
+         response.end(JSON.stringify(responseJSon));
+         return;
+    }).catch((error)=>{
+      responseJSon.status='1';
+      responseJSon.message='操作失败,请稍后重试';
+      responseJSon.result.discountList=[];
+      response.end(JSON.stringify(responseJSon));
+    });
+  
+  }
+
+
+  /*获取所有精选商品*/
+let getDiscount=(reqParamter,response)=>{
+    // 返回参数格式
+      let responseJSon={
+          status:'',
+          message:'',
+          result:{
+            discountList:[] 
+          }
+      }
+  
+      Mysql.discountList([]).then((result)=>{
+             responseJSon.status='0';
+             responseJSon.message='获取成功';
+             responseJSon.result.discountList=result;
+             response.end(JSON.stringify(responseJSon));
+      }).catch((error)=>{
+         
+          responseJSon.status='1';
+          responseJSon.message='操作失败，请稍后重试!';
+          responseJSon.result.discountList=[];
+          response.end(JSON.stringify(responseJSon));
+      });
+  }
+
+
+
+  let getRecommend=(reqParamter,response)=>{
+    let responseJSon={
+        status:'0',
+        message:'数据获取成功',
+        result:{
+            recommendList:recommendJSON
+        }
+    }
+
+    response.end(JSON.stringify(responseJSon));
+  }
+  
 
 
 
@@ -1238,7 +1313,10 @@ module.exports = {
   isCollect , // 判断用户是否已经收藏
   searchGoods, // 搜索商品
   addChosen ,// 添加精选商品
-  getChosen // 获取所有的精选商品
+  getChosen, // 获取所有的精选商品
+  addDiscount, // 添加折扣商品
+  getDiscount, // 获取所有折扣商品
+  getRecommend // 获取推荐商品
   
 
 }

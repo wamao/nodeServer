@@ -41,6 +41,9 @@ handle["/isCollect"]=requestHandlers.isCollect; // 判断用户是否已经收�
 handle["/searchGoods"]=requestHandlers.searchGoods; // 商品搜索
 handle["/addChosen"]=requestHandlers.addChosen ; // 添加精选商品
 handle["/getChosen"]=requestHandlers.getChosen ; // 添加精选商品
+handle["/getDiscount"]=requestHandlers.getDiscount ; // 添加折扣商品
+handle["/addDiscount"]=requestHandlers.addDiscount ; // 添加折扣商品
+handle["/getRecommend"]=requestHandlers.getRecommend; // 获取推荐商品
 
 server.start(router.route, handle);
 
